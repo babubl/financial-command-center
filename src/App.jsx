@@ -1,19 +1,23 @@
 // ─── App Root ───
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FinanceProvider } from '@/store/FinanceContext';
+import { ApiKeyProvider } from '@/store/ApiKeyContext';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 import DashboardView from '@/components/views/DashboardView';
 import AgentPanel from '@/components/agent/AgentPanel';
 import SmartImport from '@/components/editors/SmartImport';
 import OnboardingWizard from '@/components/views/OnboardingWizard';
+import ApiKeyBanner from '@/components/shared/ApiKeyBanner';
 
 const ONBOARDING_KEY = 'fcc_onboarding_complete';
 
 export default function App() {
   return (
     <FinanceProvider>
-      <AppShell />
+      <ApiKeyProvider>
+        <AppShell />
+      </ApiKeyProvider>
     </FinanceProvider>
   );
 }
@@ -30,7 +34,6 @@ function AppShell() {
     setShowOnboarding(false);
   };
 
-  // Show onboarding for first-time users
   if (showOnboarding) {
     return <OnboardingWizard onComplete={handleOnboardingComplete} />;
   }
@@ -42,21 +45,13 @@ function AppShell() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onSmartImport={() => setSmartImportOpen(true)}
       />
-
-      <main
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-16' : 'ml-56'
-        }`}
-      >
+      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-56'}`}>
         <TopBar />
+        <ApiKeyBanner />
         <DashboardView />
       </main>
-
       <AgentPanel />
-      <SmartImport
-        isOpen={smartImportOpen}
-        onClose={() => setSmartImportOpen(false)}
-      />
+      <SmartImport isOpen={smartImportOpen} onClose={() => setSmartImportOpen(false)} />
     </div>
   );
 }
