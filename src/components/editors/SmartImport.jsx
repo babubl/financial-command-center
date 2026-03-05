@@ -177,22 +177,27 @@ Rules: All INR. Lakhs*100000, Cr*10000000. Classify intelligently. If invested v
       const result = await readFile(f);
       let merged = { assets: [], liabilities: [], goals: [], budget: [] };
 
-      // AI parsing when key available and user opted in
-      if (useAI && hasKey) {
+      // JSON always imports directly — no AI needed
+      if (result.type === 'json') {
+        const d = result.data.data || result.data;
+        if (d.assets || d.profile || d.income) {
+          setParsedData(d); setStep('preview'); setLoading(false); return;
+        }
+      }
+
+      // AI parsing when key available and user opted in (CSV/Excel only)
+      if (useAI && hasKey && result.type !== 'json') {
         let rawText = '';
         if (result.type === 'csv') rawText = result.data;
         else if (result.type === 'xlsx') rawText = Object.entries(result.data).map(([n,c]) => `--- ${n} ---\n${c}`).join('\n');
-        else if (result.type === 'json') rawText = JSON.stringify(result.data);
         const aiParsed = await parseWithAI(rawText);
-        // Add IDs
         if (aiParsed.assets) aiParsed.assets = aiParsed.assets.map((a,i) => ({ ...a, id: generateId()+i }));
         if (aiParsed.liabilities) aiParsed.liabilities = aiParsed.liabilities.map((l,i) => ({ ...l, id: generateId()+i }));
         if (aiParsed.goals) aiParsed.goals = aiParsed.goals.map((g,i) => ({ ...g, id: generateId()+i }));
         setParsedData(aiParsed); setStep('preview'); setLoading(false); return;
       }
 
-      // Standard CSV/Excel parsing
-      if (result.type === 'json') { const d = result.data.data || result.data; if (d.assets) { setParsedData(d); setStep('preview'); setLoading(false); return; } }
+      // Standard CSV/Excel parsing (no AI)
       if (result.type === 'csv') { const { headers, rows } = parseCSV(result.data); merged = { ...merged, ...mapCSVToData(headers, rows) }; }
       if (result.type === 'xlsx') { for (const [, csv] of Object.entries(result.data)) { const { headers, rows } = parseCSV(csv); if (!rows.length) continue; const m = mapCSVToData(headers, rows); merged.assets.push(...m.assets); merged.liabilities.push(...m.liabilities); merged.goals.push(...m.goals); merged.budget.push(...m.budget); } }
       if (!merged.assets.length && !merged.liabilities.length && !merged.goals.length && !merged.budget.length) throw new Error('No recognizable data found. Try using a CSV template below.');
