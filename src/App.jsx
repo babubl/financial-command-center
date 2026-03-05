@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 import DashboardView from '@/components/views/DashboardView';
 import AgentPanel from '@/components/agent/AgentPanel';
+import SmartImport from '@/components/editors/SmartImport';
 
 export default function App() {
   return (
@@ -16,16 +17,16 @@ export default function App() {
 
 function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [smartImportOpen, setSmartImportOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-navy-950">
-      {/* Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onSmartImport={() => setSmartImportOpen(true)}
       />
 
-      {/* Main Content */}
       <main
         className={`transition-all duration-300 ${
           sidebarCollapsed ? 'ml-16' : 'ml-56'
@@ -35,8 +36,11 @@ function AppShell() {
         <DashboardView />
       </main>
 
-      {/* AI Agent Panel (floating overlay) */}
       <AgentPanel />
+      <SmartImport
+        isOpen={smartImportOpen}
+        onClose={() => setSmartImportOpen(false)}
+      />
     </div>
   );
 }
