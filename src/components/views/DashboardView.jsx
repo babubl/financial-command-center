@@ -1,8 +1,9 @@
 // ─── Dashboard View ───
-// Main dashboard layout with all cards and editor modals.
+// Routes between full dashboard and focused module views.
 
 import React, { useState } from 'react';
 import DashboardGrid, { GridCell } from '@/components/layout/DashboardGrid';
+import { useFinance } from '@/store/FinanceContext';
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { InsightCard } from '@/components/shared/AlertBadge';
 import HealthScore from '@/components/shared/HealthScore';
@@ -28,8 +29,10 @@ import BudgetEditor from '@/components/editors/BudgetEditor';
 import TaxEditor from '@/components/editors/TaxEditor';
 
 export default function DashboardView() {
+  const data = useFinance();
   const store = useFinanceStore();
   const { healthScore, insights, netWorth, incomeCalc, budgetCalc, debtSummary } = store;
+  const activeModule = data._ui?.activeModule || 'dashboard';
 
   // Editor modal states
   const [assetEditorOpen, setAssetEditorOpen] = useState(false);
@@ -42,9 +45,116 @@ export default function DashboardView() {
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
   const [taxEditorOpen, setTaxEditorOpen] = useState(false);
 
+  // ─── Editors (shared across all views) ───
+  const editors = (
+    <>
+      <AssetEditor
+        isOpen={assetEditorOpen}
+        onClose={() => { setAssetEditorOpen(false); setEditingAsset(null); }}
+        editAsset={editingAsset}
+      />
+      <LiabilityEditor
+        isOpen={liabilityEditorOpen}
+        onClose={() => { setLiabilityEditorOpen(false); setEditingLoan(null); }}
+        editLoan={editingLoan}
+      />
+      <GoalEditor
+        isOpen={goalEditorOpen}
+        onClose={() => { setGoalEditorOpen(false); setEditingGoal(null); }}
+        editGoal={editingGoal}
+      />
+      <IncomeEditor
+        isOpen={incomeEditorOpen}
+        onClose={() => setIncomeEditorOpen(false)}
+      />
+      <BudgetEditor
+        isOpen={budgetEditorOpen}
+        onClose={() => setBudgetEditorOpen(false)}
+      />
+      <TaxEditor
+        isOpen={taxEditorOpen}
+        onClose={() => setTaxEditorOpen(false)}
+      />
+    </>
+  );
+
+  // ─── Focused Module Views ───
+  if (activeModule === 'networth') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Net Worth & Asset Allocation" />
+        <div className="max-w-2xl">
+          <NetWorthCard onEdit={() => { setEditingAsset(null); setAssetEditorOpen(true); }} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  if (activeModule === 'tax') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Tax Planning" />
+        <div className="max-w-2xl">
+          <TaxCard onEdit={() => setTaxEditorOpen(true)} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  if (activeModule === 'debt') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Debt & Loans" />
+        <div className="max-w-2xl">
+          <DebtCard onEdit={() => { setEditingLoan(null); setLiabilityEditorOpen(true); }} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  if (activeModule === 'investments') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Investments & SIPs" />
+        <div className="max-w-2xl">
+          <InvestmentCard onEdit={() => { setEditingAsset(null); setAssetEditorOpen(true); }} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  if (activeModule === 'goals') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Goal Tracker" />
+        <div className="max-w-2xl">
+          <GoalsCard onEdit={() => { setEditingGoal(null); setGoalEditorOpen(true); }} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  if (activeModule === 'budget') {
+    return (
+      <div className="p-5">
+        <ModuleHeader title="Monthly Budget" />
+        <div className="max-w-2xl">
+          <BudgetCard onEdit={() => setBudgetEditorOpen(true)} />
+        </div>
+        {editors}
+      </div>
+    );
+  }
+
+  // ─── Default: Full Dashboard ───
   return (
     <div className="p-5 space-y-5">
-      {/* ══════ Hero Section ══════ */}
+      {/* Hero Section */}
       <div className="glass-card p-5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
           <div className="flex items-center gap-4">
@@ -97,11 +207,11 @@ export default function DashboardView() {
         </div>
       </div>
 
-      {/* ══════ Health Breakdown ══════ */}
+      {/* Health Breakdown */}
       <div className="glass-card p-4">
         <p className="section-label mb-3">Health Score Breakdown</p>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Object.entries(healthScore.breakdown).map(([key, data]) => {
+          {Object.entries(healthScore.breakdown).map(([key, bdata]) => {
             const labels = {
               emergencyFund: 'Emergency',
               debtManagement: 'Debt',
@@ -113,16 +223,16 @@ export default function DashboardView() {
             };
             return (
               <div key={key} className="text-center">
-                <HealthScore score={data.score} size={40} strokeWidth={3} />
+                <HealthScore score={bdata.score} size={40} strokeWidth={3} />
                 <p className="text-[10px] text-muted mt-1.5">{labels[key] || key}</p>
-                <p className="text-[9px] text-dim">×{data.weight * 100}%</p>
+                <p className="text-[9px] text-dim">{'\u00D7'}{bdata.weight * 100}%</p>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* ══════ Insights ══════ */}
+      {/* Insights */}
       {insights.length > 0 && (
         <div>
           <p className="section-label mb-3 px-1">AI Insights & Alerts</p>
@@ -134,7 +244,7 @@ export default function DashboardView() {
         </div>
       )}
 
-      {/* ══════ Module Cards Grid ══════ */}
+      {/* Module Cards Grid */}
       <DashboardGrid>
         <GridCell>
           <NetWorthCard onEdit={() => { setEditingAsset(null); setAssetEditorOpen(true); }} />
@@ -156,34 +266,16 @@ export default function DashboardView() {
         </GridCell>
       </DashboardGrid>
 
-      {/* ══════ Editor Modals ══════ */}
-      <AssetEditor
-        isOpen={assetEditorOpen}
-        onClose={() => { setAssetEditorOpen(false); setEditingAsset(null); }}
-        editAsset={editingAsset}
-      />
-      <LiabilityEditor
-        isOpen={liabilityEditorOpen}
-        onClose={() => { setLiabilityEditorOpen(false); setEditingLoan(null); }}
-        editLoan={editingLoan}
-      />
-      <GoalEditor
-        isOpen={goalEditorOpen}
-        onClose={() => { setGoalEditorOpen(false); setEditingGoal(null); }}
-        editGoal={editingGoal}
-      />
-      <IncomeEditor
-        isOpen={incomeEditorOpen}
-        onClose={() => setIncomeEditorOpen(false)}
-      />
-      <BudgetEditor
-        isOpen={budgetEditorOpen}
-        onClose={() => setBudgetEditorOpen(false)}
-      />
-      <TaxEditor
-        isOpen={taxEditorOpen}
-        onClose={() => setTaxEditorOpen(false)}
-      />
+      {editors}
+    </div>
+  );
+}
+
+function ModuleHeader({ title }) {
+  return (
+    <div className="mb-5">
+      <h2 className="text-lg font-bold text-slate-100">{title}</h2>
+      <p className="text-xs text-dim mt-0.5">Focused view — click Dashboard in sidebar to see all modules</p>
     </div>
   );
 }
