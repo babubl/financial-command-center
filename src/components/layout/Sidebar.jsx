@@ -17,6 +17,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,7 +30,7 @@ const navItems = [
   { id: 'budget', label: 'Budget', icon: PieChart },
 ];
 
-export default function Sidebar({ collapsed, onToggleCollapse }) {
+export default function Sidebar({ collapsed, onToggleCollapse, onSmartImport }) {
   const data = useFinance();
   const dispatch = useFinanceDispatch();
   const { healthScore } = useFinanceStore();
@@ -141,6 +142,23 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           {!collapsed && <span>AI Agent</span>}
           {!collapsed && (
             <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">
+              AI
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Smart Import */}
+      <div className="px-2 py-2">
+        <button
+          onClick={onSmartImport}
+          className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-500/40"
+          title={collapsed ? 'Smart Import' : undefined}
+        >
+          <Sparkles size={18} className="flex-shrink-0" />
+          {!collapsed && <span>Smart Import</span>}
+          {!collapsed && (
+            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
               AI
             </span>
           )}
